@@ -60,4 +60,4 @@ def delete_data(name: str):
     "/error", response_model=DetailResponse, responses={404: {"model": DetailResponse}}
 )
 def get_error_http():
-    return HTTPException(404, detail="This endpoint always fails.")
+    raise HTTPException(404, detail="This endpoint always fails.")
