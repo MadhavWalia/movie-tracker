@@ -5,11 +5,12 @@ from api.repository.movie.abstractions import RepositoryException
 from api.repository.movie.movie import MemoryMovieRepository
 
 
-def test_create():
+@pytest.mark.asyncio
+async def test_create():
     repo = MemoryMovieRepository()
     movie = Movie(movie_id="test", title="test", description="test", released_year=2020)
-    repo.create(movie)
-    assert repo.get_by_id("test") is not None
+    await repo.create(movie)
+    assert await repo.get_by_id("test") is not None
 
 
 @pytest.mark.parametrize(
@@ -38,11 +39,12 @@ def test_create():
         ),
     ],
 )
-def test_get_by_id(movies_seed, movie_id, expected_result):
+@pytest.mark.asyncio
+async def test_get_by_id(movies_seed, movie_id, expected_result):
     repo = MemoryMovieRepository()
     for movie in movies_seed:
-        repo.create(movie)
-    movie = repo.get_by_id(movie_id=movie_id)
+        await repo.create(movie)
+    movie = await repo.get_by_id(movie_id=movie_id)
     assert movie == expected_result
 
 
@@ -102,17 +104,19 @@ def test_get_by_id(movies_seed, movie_id, expected_result):
         ),
     ],
 )
-def test_get_by_title(movies_seed, movie_title, expected_results):
+@pytest.mark.asyncio
+async def test_get_by_title(movies_seed, movie_title, expected_results):
     repo = MemoryMovieRepository()
     for movie in movies_seed:
-        repo.create(movie)
-    result = repo.get_by_title(title=movie_title)
+        await repo.create(movie)
+    result = await repo.get_by_title(title=movie_title)
     assert result == expected_results
 
 
-def test_delete():
+@pytest.mark.asyncio
+async def test_delete():
     repo = MemoryMovieRepository()
-    repo.create(
+    await repo.create(
         Movie(
             movie_id="my_id",
             title="my_title",
@@ -121,13 +125,14 @@ def test_delete():
             watched=False,
         )
     )
-    repo.delete(movie_id="my_id")
-    assert repo.get_by_id(movie_id="my_id") is None
+    await repo.delete(movie_id="my_id")
+    assert await repo.get_by_id(movie_id="my_id") is None
 
 
-def test_update():
+@pytest.mark.asyncio
+async def test_update():
     repo = MemoryMovieRepository()
-    repo.create(
+    await repo.create(
         Movie(
             movie_id="my_id",
             title="my_title",
@@ -136,7 +141,7 @@ def test_update():
             watched=False,
         )
     )
-    repo.update(
+    await repo.update(
         movie_id="my_id",
         update_parameters={
             "title": "new_title",
@@ -145,7 +150,7 @@ def test_update():
             "watched": True,
         },
     )
-    assert repo.get_by_id(movie_id="my_id") == Movie(
+    assert await repo.get_by_id(movie_id="my_id") == Movie(
         movie_id="my_id",
         title="new_title",
         description="new_description",
@@ -154,9 +159,10 @@ def test_update():
     )
 
 
-def test_update_fail():
+@pytest.mark.asyncio
+async def test_update_fail():
     repo = MemoryMovieRepository()
-    repo.create(
+    await repo.create(
         Movie(
             movie_id="my_id",
             title="my_title",
@@ -166,4 +172,4 @@ def test_update_fail():
         )
     )
     with pytest.raises(RepositoryException):
-        repo.update(movie_id="my_id", update_parameters={"id": "new_id"})
+        await repo.update(movie_id="my_id", update_parameters={"id": "new_id"})
