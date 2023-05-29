@@ -2,7 +2,7 @@ import pytest
 
 from api.entities.movie import Movie
 from api.repository.movie.abstractions import RepositoryException
-from api.repository.movie.movie import MemoryMovieRepository
+from api.repository.movie.memory import MemoryMovieRepository
 
 
 @pytest.mark.asyncio
