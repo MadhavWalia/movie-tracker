@@ -1,16 +1,30 @@
 import pytest
-
+from api._tests.fixture import mongo_movie_repo_fixture
 from api.entities.movie import Movie
 from api.repository.movie.abstractions import RepositoryException
-from api.repository.movie.memory import MemoryMovieRepository
+
+from api.repository.movie.mongo import MongoMovieRepository
 
 
 @pytest.mark.asyncio
-async def test_create():
-    repo = MemoryMovieRepository()
-    movie = Movie(movie_id="test", title="test", description="test", released_year=2020)
-    await repo.create(movie)
-    assert await repo.get_by_id("test") is not None
+async def test_create(mongo_movie_repo_fixture):
+    await mongo_movie_repo_fixture.create(
+        movie=Movie(
+            movie_id="test",
+            title="test",
+            description="test",
+            released_year=2020,
+            watched=False,
+        )
+    )
+    movie: Movie = await mongo_movie_repo_fixture.get_by_id(movie_id="test")
+    assert movie == Movie(
+        movie_id="test",
+        title="test",
+        description="test",
+        released_year=2020,
+        watched=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -40,11 +54,13 @@ async def test_create():
     ],
 )
 @pytest.mark.asyncio
-async def test_get_by_id(movies_seed, movie_id, expected_result):
-    repo = MemoryMovieRepository()
+async def test_get_by_id(
+    mongo_movie_repo_fixture, movies_seed, movie_id, expected_result
+):
     for movie in movies_seed:
-        await repo.create(movie)
-    movie = await repo.get_by_id(movie_id=movie_id)
+        await mongo_movie_repo_fixture.create(movie)
+
+    movie: Movie = await mongo_movie_repo_fixture.get_by_id(movie_id=movie_id)
     assert movie == expected_result
 
 
@@ -105,18 +121,19 @@ async def test_get_by_id(movies_seed, movie_id, expected_result):
     ],
 )
 @pytest.mark.asyncio
-async def test_get_by_title(movies_seed, movie_title, expected_results):
-    repo = MemoryMovieRepository()
+async def test_get_by_title(
+    mongo_movie_repo_fixture, movies_seed, movie_title, expected_results
+):
     for movie in movies_seed:
-        await repo.create(movie)
-    result = await repo.get_by_title(title=movie_title)
-    assert result == expected_results
+        await mongo_movie_repo_fixture.create(movie)
+
+    movie: Movie = await mongo_movie_repo_fixture.get_by_title(title=movie_title)
+    assert movie == expected_results
 
 
 @pytest.mark.asyncio
-async def test_delete():
-    repo = MemoryMovieRepository()
-    await repo.create(
+async def test_delete(mongo_movie_repo_fixture):
+    await mongo_movie_repo_fixture.create(
         Movie(
             movie_id="my_id",
             title="my_title",
@@ -125,14 +142,13 @@ async def test_delete():
             watched=False,
         )
     )
-    await repo.delete(movie_id="my_id")
-    assert await repo.get_by_id(movie_id="my_id") is None
+    await mongo_movie_repo_fixture.delete(movie_id="my_id")
+    assert await mongo_movie_repo_fixture.get_by_id(movie_id="my_id") is None
 
 
 @pytest.mark.asyncio
-async def test_update():
-    repo = MemoryMovieRepository()
-    await repo.create(
+async def test_update(mongo_movie_repo_fixture):
+    await mongo_movie_repo_fixture.create(
         Movie(
             movie_id="my_id",
             title="my_title",
@@ -141,7 +157,7 @@ async def test_update():
             watched=False,
         )
     )
-    await repo.update(
+    await mongo_movie_repo_fixture.update(
         movie_id="my_id",
         update_parameters={
             "title": "new_title",
@@ -150,7 +166,7 @@ async def test_update():
             "watched": True,
         },
     )
-    assert await repo.get_by_id(movie_id="my_id") == Movie(
+    assert await mongo_movie_repo_fixture.get_by_id(movie_id="my_id") == Movie(
         movie_id="my_id",
         title="new_title",
         description="new_description",
@@ -160,9 +176,8 @@ async def test_update():
 
 
 @pytest.mark.asyncio
-async def test_update_fail():
-    repo = MemoryMovieRepository()
-    await repo.create(
+async def test_update_fail(mongo_movie_repo_fixture):
+    await mongo_movie_repo_fixture.create(
         Movie(
             movie_id="my_id",
             title="my_title",
@@ -172,4 +187,6 @@ async def test_update_fail():
         )
     )
     with pytest.raises(RepositoryException):
-        await repo.update(movie_id="my_id", update_parameters={"id": "new_id"})
+        await mongo_movie_repo_fixture.update(
+            movie_id="my_id", update_parameters={"id": "new_id"}
+        )

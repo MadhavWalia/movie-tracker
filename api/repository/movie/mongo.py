@@ -12,21 +12,29 @@ class MongoMovieRepository(MovieRepository):
 
     """
 
-    async def __init__(self, connection_string: str = "mongodb://127.0.0.1:27017"):
+    def __init__(
+        self,
+        connection_string: str = "mongodb://127.0.0.1:27017",
+        database: str = "movie_track_db",
+    ):
         self._client = motor.motor_asyncio.AsyncIOMotorClient(connection_string)
-        self._database = self._client["movie_track_db"]
+        self._database = self._client[database]
         # Movie collection which holds our movie documents
         self._movies = self._database["movies"]
 
     async def create(self, movie: Movie):
-        result = await self._movies.insert_one(
+        result = await self._movies.update_one(
+            {"id": movie.id},
             {
-                "id": movie.id,
-                "title": movie.title,
-                "description": movie.description,
-                "released_year": movie.released_year,
-                "watched": movie.watched,
-            }
+                "$set": {
+                    "id": movie.id,
+                    "title": movie.title,
+                    "description": movie.description,
+                    "released_year": movie.released_year,
+                    "watched": movie.watched,
+                }
+            },
+            upsert=True,
         )
 
     async def get_by_id(self, movie_id: str) -> Optional[Movie]:
@@ -63,6 +71,8 @@ class MongoMovieRepository(MovieRepository):
     async def update(self, movie_id: str, update_parameters: dict):
         if "id" in update_parameters.keys():
             raise RepositoryException("Cannot update movie id")
-        result = self._movies.update_one({"id": movie_id}, {"$set": update_parameters})
+        result = await self._movies.update_one(
+            {"id": movie_id}, {"$set": update_parameters}
+        )
         if result.modified_count == 0:
             raise RepositoryException(f"Movie with id {movie_id} not found")
