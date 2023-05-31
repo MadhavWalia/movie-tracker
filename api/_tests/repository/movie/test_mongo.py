@@ -1,8 +1,8 @@
 import pytest
+
 from api._tests.fixture import mongo_movie_repo_fixture
 from api.entities.movie import Movie
 from api.repository.movie.abstractions import RepositoryException
-
 from api.repository.movie.mongo import MongoMovieRepository
 
 
@@ -128,6 +128,104 @@ async def test_get_by_title(
         await mongo_movie_repo_fixture.create(movie)
 
     movie: Movie = await mongo_movie_repo_fixture.get_by_title(title=movie_title)
+    assert movie == expected_results
+
+
+@pytest.mark.parametrize(
+    "skip, limit, expected_results",
+    [
+        pytest.param(
+            0,
+            0,
+            [
+                Movie(
+                    movie_id="my_id",
+                    title="my_title",
+                    description="my_description",
+                    released_year=2020,
+                    watched=False,
+                ),
+                Movie(
+                    movie_id="my_id_2",
+                    title="my_title",
+                    description="my_description",
+                    released_year=2021,
+                    watched=False,
+                ),
+                Movie(
+                    movie_id="my_id_3",
+                    title="my_title",
+                    description="my_description",
+                    released_year=2022,
+                    watched=False,
+                ),
+            ],
+            id="empty_result",
+        ),
+        pytest.param(
+            0,
+            1,
+            [
+                Movie(
+                    movie_id="my_id",
+                    title="my_title",
+                    description="my_description",
+                    released_year=2020,
+                    watched=False,
+                )
+            ],
+            id="first_page",
+        ),
+        pytest.param(
+            1,
+            1,
+            [
+                Movie(
+                    movie_id="my_id_2",
+                    title="my_title",
+                    description="my_description",
+                    released_year=2021,
+                    watched=False,
+                )
+            ],
+            id="second_page",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_get_by_title_pagination(
+    mongo_movie_repo_fixture, skip, limit, expected_results
+):
+    movies_seed = [
+        Movie(
+            movie_id="my_id",
+            title="my_title",
+            description="my_description",
+            released_year=2020,
+            watched=False,
+        ),
+        Movie(
+            movie_id="my_id_2",
+            title="my_title",
+            description="my_description",
+            released_year=2021,
+            watched=False,
+        ),
+        Movie(
+            movie_id="my_id_3",
+            title="my_title",
+            description="my_description",
+            released_year=2022,
+            watched=False,
+        ),
+    ]
+
+    for movie in movies_seed:
+        await mongo_movie_repo_fixture.create(movie)
+
+    movie: Movie = await mongo_movie_repo_fixture.get_by_title(
+        title="my_title", skip=skip, limit=limit
+    )
     assert movie == expected_results
 
 
