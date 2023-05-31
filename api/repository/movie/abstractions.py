@@ -25,7 +25,9 @@ class MovieRepository(abc.ABC):
         """
         return NotImplementedError
 
-    async def get_by_title(self, title: str) -> List[Movie]:
+    async def get_by_title(
+        self, title: str, skip: int = 0, limit: int = 1000
+    ) -> List[Movie]:
         """
         Returns a list of movie sharing the same title
 

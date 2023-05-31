@@ -1,9 +1,11 @@
+import itertools
 from typing import List, Optional
 
 import motor.motor_asyncio
 
 from api.entities.movie import Movie
-from api.repository.movie.abstractions import MovieRepository, RepositoryException
+from api.repository.movie.abstractions import (MovieRepository,
+                                               RepositoryException)
 
 
 class MemoryMovieRepository(MovieRepository):
@@ -22,8 +24,20 @@ class MemoryMovieRepository(MovieRepository):
     async def get_by_id(self, movie_id: str) -> Optional[Movie]:
         return self._storage.get(movie_id)
 
-    async def get_by_title(self, title: str) -> List[Movie]:
-        return [movie for _, movie in self._storage.items() if movie.title == title]
+    async def get_by_title(
+        self, title: str, skip: int = 0, limit: int = 1000
+    ) -> List[Movie]:
+        if limit == 0:
+            return [
+                movie
+                for _, movie in itertools.islice(self._storage.items(), skip, None)
+            if movie.title == title
+            ]
+        return [
+            movie
+            for _, movie in itertools.islice(self._storage.items(), skip, skip + limit)
+            if movie.title == title
+        ]
 
     async def delete(self, movie_id: str):
         self._storage.pop(movie_id, None)
