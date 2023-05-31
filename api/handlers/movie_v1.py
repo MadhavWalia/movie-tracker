@@ -1,24 +1,20 @@
+from collections import namedtuple
+import uuid
 from functools import lru_cache
 from http import HTTPStatus
-import uuid
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Response
-from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+
 from api.dto.detail import DetailResponse
-from api.dto.movie import (
-    CreateMovieBody,
-    MovieCreatedResponse,
-    MovieResponse,
-    UpdateMovieBody,
-)
+from api.dto.movie import (CreateMovieBody, MovieCreatedResponse,
+                           MovieResponse, UpdateMovieBody)
 from api.entities.movie import Movie
-from api.repository.movie.abstractions import MovieRepository, RepositoryException
+from api.repository.movie.abstractions import (MovieRepository,
+                                               RepositoryException)
 from api.repository.movie.mongo import MongoMovieRepository
-
-
 from api.settings import Settings, settings_instance
-
 
 router = APIRouter(prefix="/api/v1/movies", tags=["movies"])
 
@@ -32,6 +28,16 @@ def movie_repository(settings: Settings = Depends(settings_instance)):
         connection_string=settings.mongo_connection_string,
         database=settings.mongo_database_name,
     )
+
+
+def pagination_params(
+    skip: int = Query(0, title="Page", description="The page number", ge=0),
+    limit: int = Query(1000, title="Limit", description="The page size", ge=0, le=1000),
+):
+    """
+    Pagination parameters
+    """
+    return namedtuple("Pagination", ["skip", "limit"])(skip, limit)
 
 
 @router.post("/", status_code=HTTPStatus.CREATED, response_model=MovieCreatedResponse)
@@ -90,9 +96,10 @@ async def get_movie_by_title(
     title: str = Query(
         ..., title="Title", description="The title of the movie", min_length=3
     ),
+    pagination: namedtuple = Depends(pagination_params),
     repo: MovieRepository = Depends(movie_repository),
 ):
-    movies = await repo.get_by_title(title=title)
+    movies = await repo.get_by_title(title=title, skip=pagination.skip, limit=pagination.limit)
     movie_return_value = []
     for movie in movies:
         movie_return_value.append(
@@ -137,7 +144,7 @@ async def update_movie(
             status_code=HTTPStatus.NOT_FOUND.value,
             content=jsonable_encoder(DetailResponse(message=str(e))),
         )
-    
+
 
 @router.delete("/{movie_id}", status_code=HTTPStatus.NO_CONTENT)
 async def delete_movie(
