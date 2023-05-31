@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional
 from pydantic import BaseModel, validator
 
 
@@ -36,3 +37,22 @@ class CreateMovieBody(BaseModel):
         if v > today.year:
             raise ValueError("released_year must be less than current year")
         return v
+
+
+class MovieCreatedResponse(BaseModel):
+    id: str
+
+
+class MovieResponse(BaseModel):
+    id: str
+    title: str
+    description: str
+    released_year: int
+    watched: bool
+
+
+class UpdateMovieBody(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    released_year: Optional[int] = None
+    watched: Optional[bool] = None

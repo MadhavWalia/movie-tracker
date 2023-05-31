@@ -75,4 +75,4 @@ class MongoMovieRepository(MovieRepository):
             {"id": movie_id}, {"$set": update_parameters}
         )
         if result.modified_count == 0:
-            raise RepositoryException(f"Movie with id {movie_id} not found")
+            raise RepositoryException(f"Movie with id {movie_id} not updated")
