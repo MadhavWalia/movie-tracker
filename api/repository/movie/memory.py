@@ -4,8 +4,7 @@ from typing import List, Optional
 import motor.motor_asyncio
 
 from api.entities.movie import Movie
-from api.repository.movie.abstractions import (MovieRepository,
-                                               RepositoryException)
+from api.repository.movie.abstractions import MovieRepository, RepositoryException
 
 
 class MemoryMovieRepository(MovieRepository):
@@ -31,7 +30,7 @@ class MemoryMovieRepository(MovieRepository):
             return [
                 movie
                 for _, movie in itertools.islice(self._storage.items(), skip, None)
-            if movie.title == title
+                if movie.title == title
             ]
         return [
             movie

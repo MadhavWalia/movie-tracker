@@ -8,11 +8,14 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from api.dto.detail import DetailResponse
-from api.dto.movie import (CreateMovieBody, MovieCreatedResponse,
-                           MovieResponse, UpdateMovieBody)
+from api.dto.movie import (
+    CreateMovieBody,
+    MovieCreatedResponse,
+    MovieResponse,
+    UpdateMovieBody,
+)
 from api.entities.movie import Movie
-from api.repository.movie.abstractions import (MovieRepository,
-                                               RepositoryException)
+from api.repository.movie.abstractions import MovieRepository, RepositoryException
 from api.repository.movie.mongo import MongoMovieRepository
 from api.settings import Settings, settings_instance
 
@@ -81,7 +84,12 @@ async def get_movie_by_id(
     """
     movie = await repo.get_by_id(movie_id=movie_id)
     if movie is None:
-        return DetailResponse(message=f"Movie with id {movie_id} not found")
+        return JSONResponse(
+            status_code=HTTPStatus.NOT_FOUND.value,
+            content=jsonable_encoder(
+                DetailResponse(message=f"Movie with id {movie_id} not found")
+            ),
+        )
     return MovieResponse(
         id=movie.id,
         title=movie.title,
@@ -99,7 +107,9 @@ async def get_movie_by_title(
     pagination: namedtuple = Depends(pagination_params),
     repo: MovieRepository = Depends(movie_repository),
 ):
-    movies = await repo.get_by_title(title=title, skip=pagination.skip, limit=pagination.limit)
+    movies = await repo.get_by_title(
+        title=title, skip=pagination.skip, limit=pagination.limit
+    )
     movie_return_value = []
     for movie in movies:
         movie_return_value.append(
