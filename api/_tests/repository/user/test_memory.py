@@ -8,17 +8,17 @@ from api.repository.user.memory import MemoryUserRepository
 
 @pytest.mark.asyncio
 async def test_create(memory_user_repo_fixture):
-    user = User(username="test", password="test123")
+    user = User(user_id="test_id", username="test", password="test123")
     await memory_user_repo_fixture.create(user)
     assert await memory_user_repo_fixture.get_user("test") is not None
 
 
 @pytest.mark.asyncio
 async def test_create_fail(memory_user_repo_fixture):
-    user = User(username="test", password="test123")
+    user = User(user_id="test_id", username="test", password="test123")
     await memory_user_repo_fixture.create(user)
 
-    user_duplicate = User(username="test", password="#test123")
+    user_duplicate = User(user_id="test_id", username="test", password="#test123")
     with pytest.raises(RepositoryException):
         await memory_user_repo_fixture.create(user_duplicate)
 
@@ -30,12 +30,14 @@ async def test_create_fail(memory_user_repo_fixture):
         pytest.param(
             [
                 User(
+                    user_id="test_id",
                     username="my_username",
                     password="my_password",
                 )
             ],
             "my_username",
             User(
+                user_id="test_id",
                 username="my_username",
                 password="my_password",
             ),
@@ -57,8 +59,8 @@ async def test_get_user(
     "users_seed, user, expected_result",
     [
         pytest.param(
-            [User(username="my_username", password="my_password")],
-            User(username="my_username", password="my_password"),
+            [User(user_id="test_id", username="my_username", password="my_password")],
+            User(user_id="test_id", username="my_username", password="my_password"),
             True,
             id="Valid",
         ),
@@ -80,13 +82,13 @@ async def test_verify_account(
     [
         pytest.param(
             [],
-            User(username="my_username", password="my_password"),
+            User(user_id="test_id", username="my_username", password="my_password"),
             False,
             id="Not_Found",
         ),
         pytest.param(
-            [User(username="my_username", password="my_password")],
-            User(username="my_username", password="not_my_password"),
+            [User(user_id="test_id", username="my_username", password="my_password")],
+            User(user_id="test_id", username="my_username", password="not_my_password"),
             True,
             id="InValid",
         ),
@@ -106,7 +108,7 @@ async def test_verify_account_fail(
 @pytest.mark.asyncio
 async def test_delete(memory_user_repo_fixture):
     await memory_user_repo_fixture.create(
-        User(username="my_username", password="my_password")
+        User(user_id="test_id", username="my_username", password="my_password")
     )
     await memory_user_repo_fixture.delete(username="my_username")
     assert await memory_user_repo_fixture.get_user(username="my_username") is None
@@ -115,17 +117,20 @@ async def test_delete(memory_user_repo_fixture):
 @pytest.mark.asyncio
 async def test_update(memory_user_repo_fixture):
     await memory_user_repo_fixture.create(
-        User(username="my_username", password="my_password")
+        User(user_id="test_id", username="my_username", password="my_password")
     )
+
     await memory_user_repo_fixture.update(
-        user=User(username="my_username", password="my_password"),
+        user=User(user_id="test_id", username="my_username", password="my_password"),
         update_parameters={
             "username": "new_username",
             "password": "new_password",
         },
     )
-    updated_user = User(username="new_username", password="new_password")
-    print(memory_user_repo_fixture._storage)
+
+    updated_user = User(
+        user_id="test_id", username="new_username", password="new_password"
+    )
     assert await memory_user_repo_fixture.verify_account(updated_user) is True
 
 
@@ -133,8 +138,8 @@ async def test_update(memory_user_repo_fixture):
     "users_seed, user, update_parameters",
     [
         pytest.param(
-            [User(username="my_username", password="my_password")],
-            User(username="my_username", password="my_password"),
+            [User(user_id="test_id", username="my_username", password="my_password")],
+            User(user_id="test_id", username="my_username", password="my_password"),
             {"username": "my_username", "password": "my_password"},
             id="Same_Password",
         )

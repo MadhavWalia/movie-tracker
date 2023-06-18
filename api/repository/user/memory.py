@@ -21,16 +21,18 @@ class MemoryUserRepository(UserRepository):
 
     async def create(self, user: User):
         user._password = self._pwd_context.hash(user.password)
-        if user.username in self._storage:
-            raise RepositoryException(
-                f"User with username {user.username} already exists"
-            )
-        self._storage[user.username] = user.password
+        for stored_user in self._storage.values():
+            if user.username == stored_user.username:
+                raise RepositoryException(
+                    f"User with username {user.username} already exists"
+                )
+        self._storage[user.user_id] = user
 
     async def get_user(self, username: str) -> Optional[User]:
-        if username not in self._storage:
-            return None
-        return User(username=username, password=self._storage.get(username))
+        for user in self._storage.values():
+            if user.username == username:
+                return user
+        return None
 
     async def verify_account(self, user: User) -> bool:
         stored_user = await self.get_user(user.username)
@@ -43,23 +45,29 @@ class MemoryUserRepository(UserRepository):
             return True
 
     async def delete(self, username: str):
-        self._storage.pop(username, None)
+        for stored_user in self._storage.values():
+            if username == stored_user.username:
+                self._storage.pop(stored_user.user_id, None)
+                return
 
     async def update(self, user: User, update_parameters: dict):
         try:
-            stored_user = await self.verify_account(user)
+            await self.verify_account(user)
         except RepositoryException as e:
             raise e
 
+        stored_user = await self.get_user(user.username)
         for key, value in update_parameters.items():
-            if key == "username":
-                self._storage[value] = self._storage.pop(user.username)
-                user._username = value
+            if key == "user_id":
+                raise RepositoryException("Cannot update user id")
 
             if key == "password":
-                if value == user.password:
+                if self._pwd_context.verify(value, stored_user.password):
                     raise RepositoryException(
-                        f"New password cannot be the same as the old one"
+                        "New password cannot be the same as the old one"
                     )
                 value = self._pwd_context.hash(value)
-                self._storage[user.username] = value
+
+            # Check that update parameters are fields from User Entity
+            if hasattr(stored_user, key):
+                setattr(stored_user, f"_{key}", value)
