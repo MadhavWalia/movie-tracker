@@ -18,21 +18,21 @@ class UserRepository(abc.ABC):
         """
         return NotImplementedError
 
-    async def get_username(self, movie_id: str) -> Optional[User]:
+    async def get_username(self, username: str) -> Optional[User]:
         """
         Returns a user by username or None if not found
 
         """
         return NotImplementedError
     
-    def verify_password(self, plain_password: str, hashed_password: str):
+    def verify_account(self, user: User):
         """
         Verifies a password against a hash
 
         """
         return NotImplementedError
 
-    async def delete(self, movie_id: str):
+    async def delete(self, username: str):
         """
         Deletes a user by username
 
@@ -41,9 +41,9 @@ class UserRepository(abc.ABC):
         """
         return NotImplementedError
 
-    async def update_username(self, movie_id: str, update_parameters: dict):
+    async def update(self, user: User, update_parameters: dict):
         """
-        Updates a user's username
+        Updates a user's profile
 
         Raises RepositoryException on failure
 
