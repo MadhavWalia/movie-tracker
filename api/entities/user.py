@@ -1,3 +1,6 @@
+from passlib.context import CryptContext
+
+
 class User:
     def __init__(
         self,
@@ -5,8 +8,10 @@ class User:
         username: str,
         password: str,
     ):
-        if username or password is None:
-            raise ValueError("values is required")
+        if username is None:
+            raise ValueError("username is required")
+        if password is None:
+            raise ValueError("password is required")
 
         self._username = username
         self._password = password
@@ -20,4 +25,13 @@ class User:
         return self._password
 
     def __repr__(self):
-        return f"User(username='{self._username})"
+        return f"User(username='{self._username}, password='{self._password}')"
+
+    def __eq__(self, o: object) -> bool:
+        if not isinstance(o, User):
+            return False
+        else:
+            pwd_context = CryptContext(schemes=["bcrypt"])
+            return self.username == o.username and pwd_context.verify(
+                o.password, self.password
+            )

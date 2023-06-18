@@ -1,8 +1,7 @@
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette_prometheus import PrometheusMiddleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
-
+from starlette_prometheus import PrometheusMiddleware
 
 # The middleware is added to the app in api\api.py:
 middleware = [
@@ -14,5 +13,5 @@ middleware = [
         allow_headers=["*"],
     ),
     Middleware(PrometheusMiddleware),
-    Middleware(HTTPSRedirectMiddleware)
+    Middleware(HTTPSRedirectMiddleware),
 ]

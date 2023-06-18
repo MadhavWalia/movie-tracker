@@ -5,7 +5,6 @@ from starlette.responses import JSONResponse
 
 from api.dto.detail import DetailResponse
 
-
 router = APIRouter(prefix="/api/v1/demo")
 
 

@@ -35,7 +35,7 @@ async def test_create(memory_movie_repo_fixture):
                 released_year=2020,
                 watched=False,
             ),
-            id="empty",
+            id="Found",
         ),
     ],
 )

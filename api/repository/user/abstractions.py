@@ -24,7 +24,7 @@ class UserRepository(abc.ABC):
 
         """
         return NotImplementedError
-    
+
     def verify_account(self, user: User):
         """
         Verifies a password against a hash

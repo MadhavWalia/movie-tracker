@@ -1,5 +1,7 @@
 import functools
+
 import pytest
+
 from api._tests.fixture import test_client
 from api.entities.movie import Movie
 from api.handlers.movie_v1 import movie_repository

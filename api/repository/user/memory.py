@@ -1,12 +1,14 @@
-import itertools
-from passlib.context import CryptContext
 from typing import List, Optional
 
+from passlib.context import CryptContext
+from pydantic import ValidationError
+
 from api.entities.user import User
-from api.repository.user.abstractions import UserRepository, RepositoryException
+from api.repository.user.abstractions import (RepositoryException,
+                                              UserRepository)
 
 
-class MemoryMovieRepository(UserRepository):
+class MemoryUserRepository(UserRepository):
     """
 
     MemoryUserRepository is a repository pattern implementation that stores users in memory.
@@ -15,40 +17,49 @@ class MemoryMovieRepository(UserRepository):
 
     def __init__(self):
         self._storage = {}
-        self._pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        self._pwd_context = CryptContext(schemes=["bcrypt"])
 
     async def create(self, user: User):
-        hashed_password = self.pwd_context.hash(user.password)
+        user._password = self._pwd_context.hash(user.password)
         if user.username in self._storage:
-            raise RepositoryException(f"User with username {user.username} already exists")
-        self._storage[user.username] = user.copy(update={"password": hashed_password})
+            raise RepositoryException(
+                f"User with username {user.username} already exists"
+            )
+        self._storage[user.username] = user.password
 
-    async def get_username(self, username: str) -> Optional[User]:
-        return self.users.get(username)
-    
-    async def verify_account(self, user: User):
-        stored_user = self._storage.get(user.username)
+    async def get_user(self, username: str) -> Optional[User]:
+        if username not in self._storage:
+            return None
+        return User(username=username, password=self._storage.get(username))
+
+    async def verify_account(self, user: User) -> bool:
+        stored_user = await self.get_user(user.username)
         if stored_user is None:
             raise RepositoryException(f"User with username {user.username} not found")
-        
-        if self.pwd_context.verify(user.password, stored_user.password) is False:
+
+        if not self._pwd_context.verify(user.password, stored_user.password):
             raise RepositoryException("Invalid password")
         else:
-            return stored_user
+            return True
 
     async def delete(self, username: str):
         self._storage.pop(username, None)
 
     async def update(self, user: User, update_parameters: dict):
         try:
-            stored_user = self.verify_account(user)
+            stored_user = await self.verify_account(user)
         except RepositoryException as e:
             raise e
-        
-        for key, value in update_parameters.items():
-            if key == "password" and value == stored_user.password:
-                raise RepositoryException(f"New password cannot be the same as the old one")
 
-            # Check that update parameters are fields from User Entity
-            if hasattr(stored_user, key):
-                setattr(stored_user, f"_{key}", value)
+        for key, value in update_parameters.items():
+            if key == "username":
+                self._storage[value] = self._storage.pop(user.username)
+                user._username = value
+
+            if key == "password":
+                if value == user.password:
+                    raise RepositoryException(
+                        f"New password cannot be the same as the old one"
+                    )
+                value = self._pwd_context.hash(value)
+                self._storage[user.username] = value

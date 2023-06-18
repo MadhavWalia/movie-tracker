@@ -1,5 +1,5 @@
-from collections import namedtuple
 import uuid
+from collections import namedtuple
 from functools import lru_cache
 from http import HTTPStatus
 
@@ -8,14 +8,11 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from api.dto.detail import DetailResponse
-from api.dto.movie import (
-    CreateMovieBody,
-    MovieCreatedResponse,
-    MovieResponse,
-    UpdateMovieBody,
-)
+from api.dto.movie import (CreateMovieBody, MovieCreatedResponse,
+                           MovieResponse, UpdateMovieBody)
 from api.entities.movie import Movie
-from api.repository.movie.abstractions import MovieRepository, RepositoryException
+from api.repository.movie.abstractions import (MovieRepository,
+                                               RepositoryException)
 from api.repository.movie.mongo import MongoMovieRepository
 from api.settings import Settings, settings_instance
 

@@ -2,11 +2,12 @@ import asyncio
 import secrets
 
 import pytest
-from api.api import create_app
 from starlette.testclient import TestClient
-from api.repository.movie.memory import MemoryMovieRepository
 
+from api.api import create_app
+from api.repository.movie.memory import MemoryMovieRepository
 from api.repository.movie.mongo import MongoMovieRepository
+from api.repository.user.memory import MemoryUserRepository
 
 
 @pytest.fixture
@@ -31,3 +32,10 @@ def mongo_movie_repo_fixture():
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(repo._client.drop_database(random_database_name))
+
+
+@pytest.fixture
+def memory_user_repo_fixture():
+    repo = MemoryUserRepository()
+    yield repo
+    del repo

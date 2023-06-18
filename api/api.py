@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from api.handlers import demo, movie_v1
 from starlette_prometheus import metrics
+
+from api.handlers import demo, movie_v1
 from api.middleware import middleware
 
 
