@@ -72,11 +72,15 @@ class MongoUserRepository(UserRepository):
         except RepositoryException as e:
             raise e
         
+        stored_user = await self.get_user(user.username)
         if "password" in update_parameters.keys():
+            if self._pwd_context.verify(update_parameters["password"], stored_user.password):
+                raise RepositoryException("New password cannot be the same as the old password")
             update_parameters["password"] = self._pwd_context.hash(update_parameters["password"])
-        result = await self._movies.update_one(
+            
+        result = await self._users.update_one(
             {"user_id": user.user_id}, {"$set": update_parameters}
         )
-        
+
         if result.modified_count == 0:
             raise RepositoryException(f"User with id {user.username} not updated")
