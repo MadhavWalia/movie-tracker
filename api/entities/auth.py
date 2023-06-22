@@ -1,7 +1,7 @@
 from passlib.context import CryptContext
 
 
-class User:
+class AuthUser:
     def __init__(
         self,
         *,
@@ -33,10 +33,10 @@ class User:
         return self._password
 
     def __repr__(self):
-        return f"User(user_id = '{self._user_id}', username='{self._username}')"
+        return f"AuthUser(user_id = '{self._user_id}', username='{self._username}')"
 
     def __eq__(self, o: object) -> bool:
-        if not isinstance(o, User):
+        if not isinstance(o, AuthUser):
             return False
         else:
             pwd_context = CryptContext(schemes=["bcrypt"])

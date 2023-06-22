@@ -1,31 +1,31 @@
 import abc
 from typing import List, Optional
 
-from api.entities.user import User
+from api.entities.auth import AuthUser
 
 
 class RepositoryException(Exception):
     pass
 
 
-class UserRepository(abc.ABC):
-    async def create(self, user: User):
+class AuthUserRepository(abc.ABC):
+    async def create(self, authuser: AuthUser):
         """
-        Creates a user profile and returns true on success
+        Creates a authuser profile and returns true on success
 
         Raises RepositoryException on failure
 
         """
         return NotImplementedError
 
-    async def get_username(self, username: str) -> Optional[User]:
+    async def get_username(self, username: str) -> Optional[AuthUser]:
         """
-        Returns a user by username or None if not found
+        Returns a authuser by username or None if not found
 
         """
         return NotImplementedError
 
-    def verify_account(self, user: User):
+    def verify_account(self, authuser: AuthUser):
         """
         Verifies a password against a hash
 
@@ -34,14 +34,14 @@ class UserRepository(abc.ABC):
 
     async def delete(self, username: str):
         """
-        Deletes a user by username
+        Deletes a authuser by username
 
         Raises RepositoryException on failure
 
         """
         return NotImplementedError
 
-    async def update(self, user: User, update_parameters: dict):
+    async def update(self, authuser: AuthUser, update_parameters: dict):
         """
         Updates a user's profile
 

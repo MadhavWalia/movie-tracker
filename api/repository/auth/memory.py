@@ -3,14 +3,14 @@ from typing import List, Optional
 from passlib.context import CryptContext
 from pydantic import ValidationError
 
-from api.entities.user import User
-from api.repository.user.abstractions import RepositoryException, UserRepository
+from api.entities.auth import AuthUser
+from api.repository.auth.abstractions import RepositoryException, AuthUserRepository
 
 
-class MemoryUserRepository(UserRepository):
+class MemoryAuthRepository(AuthUserRepository):
     """
 
-    MemoryUserRepository is a repository pattern implementation that stores users in memory.
+    MemoryAuthRepository is a repository pattern implementation that stores authusers in memory.
 
     """
 
@@ -18,27 +18,29 @@ class MemoryUserRepository(UserRepository):
         self._storage = {}
         self._pwd_context = CryptContext(schemes=["bcrypt"])
 
-    async def create(self, user: User):
-        user._password = self._pwd_context.hash(user.password)
+    async def create(self, authuser: AuthUser):
+        authuser._password = self._pwd_context.hash(authuser.password)
         for stored_user in self._storage.values():
-            if user.username == stored_user.username:
+            if authuser.username == stored_user.username:
                 raise RepositoryException(
-                    f"User with username {user.username} already exists"
+                    f"User with username {authuser.username} already exists"
                 )
-        self._storage[user.user_id] = user
+        self._storage[authuser.user_id] = authuser
 
-    async def get_user(self, username: str) -> Optional[User]:
-        for user in self._storage.values():
-            if user.username == username:
-                return user
+    async def get_user(self, username: str) -> Optional[AuthUser]:
+        for authuser in self._storage.values():
+            if authuser.username == username:
+                return authuser
         return None
 
-    async def verify_account(self, user: User) -> bool:
-        stored_user = await self.get_user(user.username)
+    async def verify_account(self, authuser: AuthUser) -> bool:
+        stored_user = await self.get_user(authuser.username)
         if stored_user is None:
-            raise RepositoryException(f"User with username {user.username} not found")
+            raise RepositoryException(
+                f"User with username {authuser.username} not found"
+            )
 
-        if not self._pwd_context.verify(user.password, stored_user.password):
+        if not self._pwd_context.verify(authuser.password, stored_user.password):
             raise RepositoryException("Invalid password")
         else:
             return True
@@ -49,13 +51,13 @@ class MemoryUserRepository(UserRepository):
                 self._storage.pop(stored_user.user_id, None)
                 return
 
-    async def update(self, user: User, update_parameters: dict):
+    async def update(self, authuser: AuthUser, update_parameters: dict):
         try:
-            await self.verify_account(user)
+            await self.verify_account(authuser)
         except RepositoryException as e:
             raise e
 
-        stored_user = await self.get_user(user.username)
+        stored_user = await self.get_user(authuser.username)
         for key, value in update_parameters.items():
             if key == "user_id":
                 raise RepositoryException("Cannot update user id")
