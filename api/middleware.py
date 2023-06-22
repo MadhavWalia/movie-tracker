@@ -1,4 +1,8 @@
+from fastapi import HTTPException
+from http import HTTPStatus
 from starlette.middleware import Middleware
+from starlette.requests import Request
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette_prometheus import PrometheusMiddleware
@@ -13,5 +17,5 @@ middleware = [
         allow_headers=["*"],
     ),
     Middleware(PrometheusMiddleware),
-    Middleware(HTTPSRedirectMiddleware),
+    # Middleware(HTTPSRedirectMiddleware),
 ]

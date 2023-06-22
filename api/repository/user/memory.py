@@ -4,8 +4,7 @@ from passlib.context import CryptContext
 from pydantic import ValidationError
 
 from api.entities.user import User
-from api.repository.user.abstractions import (RepositoryException,
-                                              UserRepository)
+from api.repository.user.abstractions import RepositoryException, UserRepository
 
 
 class MemoryUserRepository(UserRepository):

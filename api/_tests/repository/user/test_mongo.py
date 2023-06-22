@@ -13,11 +13,7 @@ async def test_create(mongo_user_repo_fixture):
     )
 
     user: User = await mongo_user_repo_fixture.get_user(username="test")
-    assert user == User(
-        user_id="test_id",
-        username="test",
-        password="test123"
-    )
+    assert user == User(user_id="test_id", username="test", password="test123")
 
 
 @pytest.mark.asyncio
@@ -54,9 +50,7 @@ async def test_create_fail(mongo_user_repo_fixture):
     ],
 )
 @pytest.mark.asyncio
-async def test_get_user(
-    mongo_user_repo_fixture, users_seed, username, expected_result
-):
+async def test_get_user(mongo_user_repo_fixture, users_seed, username, expected_result):
     for user in users_seed:
         await mongo_user_repo_fixture.create(user)
 

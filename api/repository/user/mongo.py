@@ -5,8 +5,7 @@ from pymongo.errors import DuplicateKeyError
 from passlib.context import CryptContext
 
 from api.entities.user import User
-from api.repository.user.abstractions import (UserRepository,
-                                               RepositoryException)
+from api.repository.user.abstractions import UserRepository, RepositoryException
 
 
 class MongoUserRepository(UserRepository):
@@ -38,7 +37,9 @@ class MongoUserRepository(UserRepository):
                 }
             )
         except DuplicateKeyError:
-            raise RepositoryException(f"User with username {user.username} already exists")
+            raise RepositoryException(
+                f"User with username {user.username} already exists"
+            )
 
     async def get_user(self, username: str) -> Optional[User]:
         document = await self._users.find_one({"username": username})
@@ -56,9 +57,13 @@ class MongoUserRepository(UserRepository):
             if self._pwd_context.verify(user.password, document.get("password")):
                 return True
             else:
-                raise RepositoryException(f"Password for user {user.username} is incorrect")
+                raise RepositoryException(
+                    f"Password for user {user.username} is incorrect"
+                )
         else:
-            raise RepositoryException(f"User with username {user.username} does not exist")
+            raise RepositoryException(
+                f"User with username {user.username} does not exist"
+            )
 
     async def delete(self, username: str):
         await self._users.delete_one({"username": username})
@@ -66,18 +71,24 @@ class MongoUserRepository(UserRepository):
     async def update(self, user: User, update_parameters: dict):
         if "user_id" in update_parameters.keys():
             raise RepositoryException("Cannot update user id")
-        
+
         try:
             await self.verify_account(user)
         except RepositoryException as e:
             raise e
-        
+
         stored_user = await self.get_user(user.username)
         if "password" in update_parameters.keys():
-            if self._pwd_context.verify(update_parameters["password"], stored_user.password):
-                raise RepositoryException("New password cannot be the same as the old password")
-            update_parameters["password"] = self._pwd_context.hash(update_parameters["password"])
-            
+            if self._pwd_context.verify(
+                update_parameters["password"], stored_user.password
+            ):
+                raise RepositoryException(
+                    "New password cannot be the same as the old password"
+                )
+            update_parameters["password"] = self._pwd_context.hash(
+                update_parameters["password"]
+            )
+
         result = await self._users.update_one(
             {"user_id": user.user_id}, {"$set": update_parameters}
         )
