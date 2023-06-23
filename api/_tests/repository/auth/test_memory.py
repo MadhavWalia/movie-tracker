@@ -58,7 +58,7 @@ async def test_get_user(
 
 
 @pytest.mark.parametrize(
-    "authusers_seed, authuser, expected_result",
+    "authusers_seed, username, password, expected_result",
     [
         pytest.param(
             [
@@ -66,7 +66,8 @@ async def test_get_user(
                     user_id="test_id", username="my_username", password="my_password"
                 )
             ],
-            AuthUser(user_id="test_id", username="my_username", password="my_password"),
+            "my_username",
+            "my_password",
             True,
             id="Valid",
         ),
@@ -74,21 +75,24 @@ async def test_get_user(
 )
 @pytest.mark.asyncio
 async def test_verify_account(
-    memory_auth_repo_fixture, authusers_seed, authuser, expected_result
+    memory_auth_repo_fixture, authusers_seed, username, password, expected_result
 ):
     for authusers in authusers_seed:
         await memory_auth_repo_fixture.create(authusers)
 
-    result = await memory_auth_repo_fixture.verify_account(authuser)
+    result = await memory_auth_repo_fixture.verify_account(
+        username=username, password=password
+    )
     assert result == expected_result
 
 
 @pytest.mark.parametrize(
-    "authusers_seed, authuser, expected_result",
+    "authusers_seed, username, password, expected_result",
     [
         pytest.param(
             [],
-            AuthUser(user_id="test_id", username="my_username", password="my_password"),
+            "my_username",
+            "my_password",
             False,
             id="Not_Found",
         ),
@@ -98,9 +102,8 @@ async def test_verify_account(
                     user_id="test_id", username="my_username", password="my_password"
                 )
             ],
-            AuthUser(
-                user_id="test_id", username="my_username", password="not_my_password"
-            ),
+            "my_username",
+            "not_my_password",
             True,
             id="InValid",
         ),
@@ -108,13 +111,15 @@ async def test_verify_account(
 )
 @pytest.mark.asyncio
 async def test_verify_account_fail(
-    memory_auth_repo_fixture, authusers_seed, authuser, expected_result
+    memory_auth_repo_fixture, authusers_seed, username, password, expected_result
 ):
     for authusers in authusers_seed:
         await memory_auth_repo_fixture.create(authusers)
 
     with pytest.raises(RepositoryException):
-        result = await memory_auth_repo_fixture.verify_account(authuser)
+        result = await memory_auth_repo_fixture.verify_account(
+            username=username, password=password
+        )
 
 
 @pytest.mark.asyncio
@@ -142,10 +147,9 @@ async def test_update(memory_auth_repo_fixture):
         },
     )
 
-    updated_authuser = AuthUser(
-        user_id="test_id", username="new_username", password="new_password"
-    )
-    assert await memory_auth_repo_fixture.verify_account(updated_authuser) is True
+    assert await memory_auth_repo_fixture.verify_account(
+        username="new_username", password="new_password"
+    ) is True
 
 
 @pytest.mark.parametrize(

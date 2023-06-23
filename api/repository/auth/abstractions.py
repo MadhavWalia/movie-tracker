@@ -18,14 +18,14 @@ class AuthUserRepository(abc.ABC):
         """
         return NotImplementedError
 
-    async def get_username(self, username: str) -> Optional[AuthUser]:
+    async def get_user(self, username: str) -> Optional[AuthUser]:
         """
         Returns a authuser by username or None if not found
 
         """
         return NotImplementedError
 
-    def verify_account(self, authuser: AuthUser):
+    def verify_account(self, username: str, password: str):
         """
         Verifies a password against a hash
 

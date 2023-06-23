@@ -22,7 +22,7 @@ class MongoAuthRepository(AuthUserRepository):
         self._client = motor.motor_asyncio.AsyncIOMotorClient(connection_string)
         self._database = self._client[database]
         # Auth collection which holds our auth documents
-        self._auth = self._database["auth"]
+        self._auth = self._database["auth_users"]
         self._pwd_context = CryptContext(schemes=["bcrypt"])
 
     async def create(self, authuser: AuthUser):
@@ -51,18 +51,18 @@ class MongoAuthRepository(AuthUserRepository):
             )
         return None
 
-    async def verify_account(self, authuser: AuthUser):
-        document = await self._auth.find_one({"username": authuser.username})
+    async def verify_account(self, username: str, password: str) -> bool:
+        document = await self._auth.find_one({"username": username})
         if document:
-            if self._pwd_context.verify(authuser.password, document.get("password")):
+            if self._pwd_context.verify(password, document.get("password")):
                 return True
             else:
                 raise RepositoryException(
-                    f"Password for user {authuser.username} is incorrect"
+                    f"Password for user {username} is incorrect"
                 )
         else:
             raise RepositoryException(
-                f"User with username {authuser.username} does not exist"
+                f"User with username {username} does not exist"
             )
 
     async def delete(self, username: str):
@@ -73,7 +73,9 @@ class MongoAuthRepository(AuthUserRepository):
             raise RepositoryException("Cannot update user id")
 
         try:
-            await self.verify_account(authuser)
+            await self.verify_account(
+                username=authuser.username, password=authuser.password
+            )
         except RepositoryException as e:
             raise e
 

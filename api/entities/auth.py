@@ -33,7 +33,7 @@ class AuthUser:
         return self._password
 
     def __repr__(self):
-        return f"AuthUser(user_id = '{self._user_id}', username='{self._username}')"
+        return f"AuthUser(user_id = '{self._user_id}', username='{self._username}', password='{self._password}')"
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, AuthUser):

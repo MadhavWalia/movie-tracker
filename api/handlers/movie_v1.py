@@ -17,7 +17,7 @@ from api.dto.movie import (
 from api.entities.movie import Movie
 from api.repository.movie.abstractions import MovieRepository, RepositoryException
 from api.repository.movie.mongo import MongoMovieRepository
-from api.settings import Settings, settings_instance
+from api.settings.movie import Settings, settings_instance
 
 router = APIRouter(prefix="/api/v1/movies", tags=["movies"])
 
