@@ -9,10 +9,11 @@ class UserRegisteredResponse(BaseModel):
     user_id: str
 
 
-class AccessTokenResponse(BaseModel):
+class TokenResponse(BaseModel):
     """
     Access Token Response Model
     """
 
     access_token: str
+    refresh_token: str
     token_type: str

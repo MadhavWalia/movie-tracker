@@ -57,13 +57,9 @@ class MongoAuthRepository(AuthUserRepository):
             if self._pwd_context.verify(password, document.get("password")):
                 return True
             else:
-                raise RepositoryException(
-                    f"Password for user {username} is incorrect"
-                )
+                raise RepositoryException(f"Password for user {username} is incorrect")
         else:
-            raise RepositoryException(
-                f"User with username {username} does not exist"
-            )
+            raise RepositoryException(f"User with username {username} does not exist")
 
     async def delete(self, username: str):
         await self._auth.delete_one({"username": username})

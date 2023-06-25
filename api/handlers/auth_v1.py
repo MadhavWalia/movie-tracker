@@ -23,18 +23,20 @@ URL: POST www.example.com/auth/v1/logout
 from functools import lru_cache
 from http import HTTPStatus
 import uuid
-from fastapi import APIRouter, Depends
+from redis import Redis
+from datetime import datetime
+from fastapi import APIRouter, Body, Depends
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm
-from api.dto.auth import AccessTokenResponse, UserRegisteredResponse
+from api.dto.auth import TokenResponse, UserRegisteredResponse
 from api.dto.detail import DetailResponse
 from api.entities.auth import AuthUser
 from api.repository.auth.abstractions import AuthUserRepository
 from api.repository.auth.mongo import MongoAuthRepository
 
 from api.settings.auth import Settings, settings_instance
-from api.utils.auth import create_access_token
+from api.utils.auth import create_access_token, create_refresh_token, decode_token
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -48,6 +50,18 @@ def auth_repository(settings: Settings = Depends(settings_instance)):
     return MongoAuthRepository(
         connection_string=settings.mongo_connection_string,
         database=settings.mongo_database_name,
+    )
+
+
+@lru_cache()
+def redis_instance(settings: Settings = Depends(settings_instance)):
+    """
+    Creates a singleton instance of Redis Dependency
+    """
+    return Redis(
+        host="127.0.0.1",
+        port=settings.redis_port,
+        db=settings.redis_db,
     )
 
 
@@ -91,7 +105,7 @@ async def register_user(
 @router.post(
     "/login",
     responses={
-        HTTPStatus.OK.value: {"model": AccessTokenResponse},
+        HTTPStatus.OK.value: {"model": TokenResponse},
         HTTPStatus.UNAUTHORIZED.value: {"model": DetailResponse},
     },
 )
@@ -117,13 +131,77 @@ async def login_user(
         #     content=jsonable_encoder(DetailResponse(message=str(e))),
         # )
 
-    # Generate the access token
+    # Generate the access token and refresh token
     access_token = create_access_token(username=user.username)
+    refresh_token = create_refresh_token(username=user.username)
 
-    # Return the access token
+    # Return the access and refresh token
     return JSONResponse(
         status_code=HTTPStatus.OK,
         content=jsonable_encoder(
-            AccessTokenResponse(access_token=access_token, token_type="bearer")
+            TokenResponse(
+                access_token=access_token,
+                refresh_token=refresh_token,
+                token_type="bearer",
+            )
+        ),
+    )
+
+
+@router.post(
+    "/refresh",
+    responses={
+        HTTPStatus.OK.value: {"model": TokenResponse},
+        HTTPStatus.UNAUTHORIZED.value: {"model": DetailResponse},
+    },
+)
+async def refresh_token(
+    refresh_token: str = Body(..., title="Refresh Token"),
+    redis_client: Redis = Depends(redis_instance),
+):
+    """
+    Refresh the access token
+    """
+
+    # Validate the refresh token
+    if redis_client.exists("token_blacklist") and redis_client.sismember(
+        "token_blacklist", refresh_token
+    ):
+        return JSONResponse(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            content=jsonable_encoder(DetailResponse(message="Invalid refresh token")),
+        )
+
+    # Decode the refresh token
+    payload = decode_token(refresh_token)
+    username = payload.get("sub")
+    expiry = payload.get("exp")
+
+    # Checking if the token is expired
+    if expiry is None or datetime.utcfromtimestamp(expiry) < datetime.utcnow():
+        return JSONResponse(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            content=jsonable_encoder(DetailResponse(message="Refresh token expired")),
+        )
+
+    # Generate the access token
+    new_access_token = create_access_token(username=username)
+
+    # Rotating the refresh token:
+
+    # 1. Revoke the existing refresh token
+    redis_client.sadd("token_blacklist", refresh_token)
+    # 2. Generate a new refresh token
+    new_refresh_token = create_refresh_token(username=username)
+
+    # Return the access and refresh token
+    return JSONResponse(
+        status_code=HTTPStatus.OK,
+        content=jsonable_encoder(
+            TokenResponse(
+                access_token=new_access_token,
+                refresh_token=new_refresh_token,
+                token_type="bearer",
+            )
         ),
     )

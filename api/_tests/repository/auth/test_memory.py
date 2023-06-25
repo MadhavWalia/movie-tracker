@@ -147,9 +147,12 @@ async def test_update(memory_auth_repo_fixture):
         },
     )
 
-    assert await memory_auth_repo_fixture.verify_account(
-        username="new_username", password="new_password"
-    ) is True
+    assert (
+        await memory_auth_repo_fixture.verify_account(
+            username="new_username", password="new_password"
+        )
+        is True
+    )
 
 
 @pytest.mark.parametrize(

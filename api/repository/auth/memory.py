@@ -36,9 +36,7 @@ class MemoryAuthRepository(AuthUserRepository):
     async def verify_account(self, username: str, password: str) -> bool:
         stored_user = await self.get_user(username)
         if stored_user is None:
-            raise RepositoryException(
-                f"User with username {username} not found"
-            )
+            raise RepositoryException(f"User with username {username} not found")
 
         if not self._pwd_context.verify(password, stored_user.password):
             raise RepositoryException("Invalid password")

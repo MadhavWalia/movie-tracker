@@ -2,7 +2,9 @@ fastapi==0.95.2
 uvicorn==0.22.0
 pydantic==1.10.7
 motor==3.1.2
+redis==4.5.5
 passlib==1.7.4
 starlette-prometheus==0.9.0
 python-jose==3.3.0
 python-multipart==0.0.6
+hiredis==2.2.3

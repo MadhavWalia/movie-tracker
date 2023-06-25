@@ -15,6 +15,7 @@ from api.middleware.protected_routes import PROTECTED_ROUTES
 from api.repository.auth.abstractions import AuthUserRepository
 from api.repository.auth.mongo import MongoAuthRepository
 from api.settings.auth import JWTSettings, Settings, settings_instance
+from api.utils.auth import decode_token
 
 
 @lru_cache()
@@ -50,17 +51,15 @@ class AuthenticatedMiddleware(BaseHTTPMiddleware):
 
             # Decoding the token
             try:
-                # Getting the secret key and algorithm from the settings
-                jwt_settings = JWTSettings.get_settings()
-
-                payload = jwt.decode(
-                    token, jwt_settings.SECRET_KEY, jwt_settings.ALGORITHM
-                )
+                payload = decode_token(token)
                 username: str = payload.get("sub")
                 expiry: int = payload.get("exp")
 
                 # Checking if the token is expired
-                if expiry is None or datetime.utcfromtimestamp(expiry) < datetime.utcnow():
+                if (
+                    expiry is None
+                    or datetime.utcfromtimestamp(expiry) < datetime.utcnow()
+                ):
                     return JSONResponse(
                         status_code=HTTPStatus.UNAUTHORIZED,
                         content={"message": "Token expired"},
@@ -74,9 +73,9 @@ class AuthenticatedMiddleware(BaseHTTPMiddleware):
                     )
 
             except JWTError:
-                raise HTTPException(
+                return JSONResponse(
                     status_code=HTTPStatus.UNAUTHORIZED,
-                    detail="Invalid token",
+                    content={"message": "Invalid token"},
                 )
 
         response = await call_next(request)

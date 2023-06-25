@@ -1,5 +1,5 @@
 from functools import lru_cache
-
+import redis
 from pydantic import BaseSettings, Field
 
 
@@ -22,6 +22,28 @@ class Settings(BaseSettings):
         env="MONGODB_DATABASE_NAME",
     )
 
+    # Redis Settings
+    redis_host: str = Field(
+        "127.0.0.1",
+        title="Redis Host",
+        description="The host of the redis server",
+        env="REDIS_HOST",
+    )
+
+    redis_port: int = Field(
+        6379,
+        title="Redis Port",
+        description="The port of the redis server",
+        env="REDIS_PORT",
+    )
+
+    redis_db: int = Field(
+        0,
+        title="Redis DB",
+        description="The db of the redis server",
+        env="REDIS_DB",
+    )
+
 
 @lru_cache()
 def settings_instance():
@@ -35,6 +57,7 @@ class JWTSettings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_MINUTES: int
 
     class Config:
         env_file = ".env"
