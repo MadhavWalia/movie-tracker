@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException
 from http import HTTPStatus
 from jose import jwt, JWTError
 from datetime import datetime
+from redis import Redis
 from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -29,10 +30,24 @@ def auth_repository():
     )
 
 
+@lru_cache()
+def redis_instance():
+    """
+    Creates a singleton instance of Redis Dependency
+    """
+    settings = settings_instance()
+    return Redis(
+        host="127.0.0.1",
+        port=settings.redis_port,
+        db=settings.redis_db,
+    )
+
+
 class AuthenticatedMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         self.repo = auth_repository()
+        self.blacklist = redis_instance()
 
     async def dispatch(self, request: Request, call_next):
         # Check if the route requires protection
@@ -47,6 +62,15 @@ class AuthenticatedMiddleware(BaseHTTPMiddleware):
 
             # Extracting the token from the header
             token = auth_header.split(" ")[1]
+
+            # Checking if the token is blacklisted
+            if self.blacklist.exists("token_blacklist") and self.blacklist.sismember(
+                "token_blacklist", token
+            ):
+                return JSONResponse(
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                    content={"message": "Invalid token"},
+                )
 
             # Decoding the token
             try:

@@ -1,28 +1,9 @@
-"""
-User Profile Retrieval:
-
-URL: GET www.example.com/auth/v1/profile
-Password Reset:
-
-URL: POST www.example.com/auth/v1/reset-password
-Password Change:
-
-URL: POST www.example.com/auth/v1/change-password
-User Account Deactivation:
-
-URL: DELETE www.example.com/auth/v1/account
-Logout:
-
-URL: POST www.example.com/auth/v1/logout
-
-"""
-
 from functools import lru_cache
 from http import HTTPStatus
 import uuid
 from redis import Redis
 from datetime import datetime
-from fastapi import APIRouter, Body, Depends, Form
+from fastapi import APIRouter, Body, Depends, Form, Header, Response
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm
@@ -208,3 +189,45 @@ async def refresh_token(
             )
         ),
     )
+
+
+
+@router.post("/logout", responses={
+    HTTPStatus.OK.value: {"model": DetailResponse},
+    HTTPStatus.UNAUTHORIZED.value: {"model": DetailResponse},
+})
+async def logout_user(
+   authorization: str = Header(...),
+    refresh_token: str = Form(...),
+    redis_client: Redis = Depends(redis_instance),
+):
+    """
+    Logout a user
+    """
+
+    # Validate the refresh token
+    if redis_client.exists("token_blacklist") and redis_client.sismember(
+        "token_blacklist", refresh_token
+    ):
+        return JSONResponse(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            content=jsonable_encoder(DetailResponse(message="Invalid refresh token")),
+        )
+    
+    # Revoke the refresh token
+    redis_client.sadd("token_blacklist", refresh_token)
+
+    # Revoke the access token
+    access_token = authorization.split(" ")[1]
+    redis_client.sadd("token_blacklist", access_token)
+
+    # Return the response
+    return JSONResponse(
+        status_code=HTTPStatus.OK,
+        content=jsonable_encoder(DetailResponse(message="Successfully logged out")),
+    )
+
+
+
+
+
