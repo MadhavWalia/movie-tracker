@@ -1,7 +1,4 @@
 """
-Token Refresh:
-
-URL: POST www.example.com/auth/v1/refresh
 User Profile Retrieval:
 
 URL: GET www.example.com/auth/v1/profile
@@ -25,7 +22,7 @@ from http import HTTPStatus
 import uuid
 from redis import Redis
 from datetime import datetime
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Form
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm
@@ -125,11 +122,10 @@ async def login_user(
         )
 
     except Exception as e:
-        raise e
-        # return JSONResponse(
-        #     status_code=HTTPStatus.UNAUTHORIZED,
-        #     content=jsonable_encoder(DetailResponse(message=str(e))),
-        # )
+        return JSONResponse(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            content=jsonable_encoder(DetailResponse(message=str(e))),
+        )
 
     # Generate the access token and refresh token
     access_token = create_access_token(username=user.username)
@@ -156,7 +152,7 @@ async def login_user(
     },
 )
 async def refresh_token(
-    refresh_token: str = Body(..., title="Refresh Token"),
+    refresh_token: str = Form(),
     redis_client: Redis = Depends(redis_instance),
 ):
     """
@@ -173,9 +169,16 @@ async def refresh_token(
         )
 
     # Decode the refresh token
-    payload = decode_token(refresh_token)
-    username = payload.get("sub")
-    expiry = payload.get("exp")
+    try:
+        payload = decode_token(refresh_token)
+        username = payload.get("sub")
+        expiry = payload.get("exp")
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            content=jsonable_encoder(DetailResponse(message=str(e))),
+        )
 
     # Checking if the token is expired
     if expiry is None or datetime.utcfromtimestamp(expiry) < datetime.utcnow():

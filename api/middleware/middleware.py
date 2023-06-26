@@ -12,9 +12,8 @@ from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette_prometheus import PrometheusMiddleware
 
 from api.middleware.protected_routes import PROTECTED_ROUTES
-from api.repository.auth.abstractions import AuthUserRepository
 from api.repository.auth.mongo import MongoAuthRepository
-from api.settings.auth import JWTSettings, Settings, settings_instance
+from api.settings.auth import settings_instance
 from api.utils.auth import decode_token
 
 

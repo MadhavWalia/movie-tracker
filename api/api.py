@@ -12,6 +12,6 @@ def create_app():
     # app.include_router(demo.router)
     app.include_router(movie_v1.router)
     app.include_router(auth_v1.router)
-    app.add_route("/metrics/", metrics)
+    app.add_route("/metrics", metrics)
 
     return app
