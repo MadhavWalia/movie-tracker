@@ -37,7 +37,7 @@ def redis_instance(settings: Settings = Depends(settings_instance)):
     Creates a singleton instance of Redis Dependency
     """
     return Redis(
-        host="127.0.0.1",
+        host=settings.redis_host,
         port=settings.redis_port,
         db=settings.redis_db,
     )
@@ -191,13 +191,15 @@ async def refresh_token(
     )
 
 
-
-@router.post("/logout", responses={
-    HTTPStatus.OK.value: {"model": DetailResponse},
-    HTTPStatus.UNAUTHORIZED.value: {"model": DetailResponse},
-})
+@router.post(
+    "/logout",
+    responses={
+        HTTPStatus.OK.value: {"model": DetailResponse},
+        HTTPStatus.UNAUTHORIZED.value: {"model": DetailResponse},
+    },
+)
 async def logout_user(
-   authorization: str = Header(...),
+    authorization: str = Header(...),
     refresh_token: str = Form(...),
     redis_client: Redis = Depends(redis_instance),
 ):
@@ -213,7 +215,7 @@ async def logout_user(
             status_code=HTTPStatus.UNAUTHORIZED,
             content=jsonable_encoder(DetailResponse(message="Invalid refresh token")),
         )
-    
+
     # Revoke the refresh token
     redis_client.sadd("token_blacklist", refresh_token)
 
@@ -226,8 +228,3 @@ async def logout_user(
         status_code=HTTPStatus.OK,
         content=jsonable_encoder(DetailResponse(message="Successfully logged out")),
     )
-
-
-
-
-

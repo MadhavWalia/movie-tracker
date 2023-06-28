@@ -4,10 +4,11 @@ from pydantic import BaseSettings, Field
 
 
 class Settings(BaseSettings):
-    # MongoDB Settings
+    
     def __hash__(self) -> int:
         return 1
 
+    # MongoDB Settings
     mongo_connection_string: str = Field(
         "mongodb://127.0.0.1:27017",
         title="MongoDB Connection String",
@@ -43,6 +44,9 @@ class Settings(BaseSettings):
         description="The db of the redis server",
         env="REDIS_DB",
     )
+
+    class Config:
+        env_file = ".env"
 
 
 @lru_cache()

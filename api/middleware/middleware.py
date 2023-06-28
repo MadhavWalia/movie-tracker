@@ -37,7 +37,7 @@ def redis_instance():
     """
     settings = settings_instance()
     return Redis(
-        host="127.0.0.1",
+        host=settings.redis_host,
         port=settings.redis_port,
         db=settings.redis_db,
     )
